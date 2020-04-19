@@ -1,3 +1,4 @@
+import torch
 def gen_gts(cx,cy,width,height,sigma):
     # cx -> center x
     # cy -> center y
