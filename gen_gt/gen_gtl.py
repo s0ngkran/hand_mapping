@@ -1,4 +1,5 @@
 import torch
+import numpy as np
 link = [[0,1] ,[0,3] ,[0,5] ,[0,7] ,[0,9], [1,2], [3,4], [5,6], [7,8], [9,10]]
 def gt_vec(width, height, point, link=link):
     ans = torch.zeros( len(link)*2, width, height)
