@@ -16,6 +16,7 @@ def gen_gts(cx,cy,width,height,sigma):
     # import matplotlib.pyplot as plt
     # a = gen_gts(200,200,400,600,10)
     # plt.imshow(a)
+    # plt.colorbar()
     # plt.show()
     
     return ans
