@@ -1,6 +1,9 @@
 import torch
 import numpy as np
+import pickle 
+import os
 link = [[0,1] ,[0,3] ,[0,5] ,[0,7] ,[0,9], [1,2], [3,4], [5,6], [7,8], [9,10]]
+link = [[0,1]]
 def gt_vec(width, height, point, link=link):
     ans = torch.zeros( len(link)*2, width, height)
     x, y = np.where(ans[0]==0)
@@ -19,9 +22,68 @@ def gt_vec(width, height, point, link=link):
   
         c1 = np.dot(u_vec,temp)
         c1 = (0<=c1) & (c1<=length)
-        c2 = abs(np.dot(u_vec_p,temp)) <= 7
+        c2 = abs(np.dot(u_vec_p,temp)) <= 20
         condition = c1 & c2
        
         ans[ index*2] = torch.tensor(u_vec[0] * condition).reshape(width, height)  #x
         ans[ index*2+1] = torch.tensor(u_vec[1] * condition).reshape(width, height) #y
     return ans
+def test_gt_vec():
+    import matplotlib.pyplot as plt 
+  
+    with open('temp/0000000025_2p.pkl', 'rb') as f:
+        data = pickle.load(f)
+        data = data['keypoint']
+    point = data
+    point = [np.array(i) for i in point]
+    gtl = gt_vec(360,360,point)
+    gtl = gtl.mean(0)
+  
+    for x,y in data:
+        plt.plot(x,y,'ro')
+        
+    plt.imshow(gtl.transpose(0,1))
+    plt.show()
+def gen_gtl_folder(gt_folder, savefolder, dim1, dim2):
+    assert gt_folder[-1] == savefolder[-1] == '/'
+    from torch.nn import functional as F
+    for _,__,gt_names in os.walk(gt_folder):
+        print('fin walk')
+
+    for i, gt_name in enumerate(gt_names):
+        name = gt_name[:-4]
+        with open(gt_folder + gt_name, 'rb') as f:
+            data = pickle.load(f)
+            data = data['keypoint']
+        point = data
+        point = [np.array(i) for i in point]
+        width, height = dim1
+        gtl = gt_vec(width,height,point)
+        gtl = F.interpolate(gtl.unsqueeze(0), dim2, mode='bicubic').squeeze()
+        torch.save(gtl, savefolder+name)
+        print(name, i+1, len(gt_names))
+    print('fin all')
+def test_gtl():
+    import matplotlib.pyplot as plt 
+    import cv2
+    from torch.nn import functional as F
+    img = cv2.imread('temp/0000000025.bmp') # y,x,ch
+    img = torch.FloatTensor(img/255).transpose(0,2) # ch,x,y
+
+    gtl = torch.load('temp/0000000025_2p')
+    
+    gtl = F.interpolate(gtl.unsqueeze(0), (360,360), mode='bicubic').squeeze()
+    gtl = gtl.mean(0)
+    ans = img[0]*0.5 + gtl*0.5
+    plt.imshow(ans)
+    plt.colorbar()
+    plt.show()
+def ex_gen_gtl_folder():
+    gt_folder = 'testing/pkl/'
+    savefolder = 'testing/gtl/'
+    dim1 = (360,360)
+    dim2 = (45,45)
+    gen_gtl_folder(gt_folder, savefolder, dim1, dim2)
+
+if __name__ == "__main__":
+    test_gtl()
