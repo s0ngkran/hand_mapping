@@ -44,24 +44,25 @@ def test_gt_vec():
         
     plt.imshow(gtl.transpose(0,1))
     plt.show()
-def gen_gtl_folder(gt_folder, savefolder, dim1, dim2):
-    assert gt_folder[-1] == savefolder[-1] == '/'
+def gen_gtl_folder(gt_file, savefolder, dim1, dim2):
+    assert gt_file[-6:] == '.torch'
+    assert savefolder[-1] == '/'
     from torch.nn import functional as F
-    for _,__,gt_names in os.walk(gt_folder):
-        print('fin walk')
 
-    for i, gt_name in enumerate(gt_names):
-        name = gt_name[:-4]
-        with open(gt_folder + gt_name, 'rb') as f:
-            data = pickle.load(f)
-            data = data['keypoint']
-        point = data
-        point = [np.array(i) for i in point]
+    gt = torch.load(gt_file)
+    keypoint = gt['keypoint']
+    for i in range(len(keypoint)):
+        if i == 0: continue
+        
+        # if i<=350: continue
+
+        point = [np.array(x) for x in keypoint[i]]
         width, height = dim1
         gtl = gt_vec(width,height,point)
         gtl = F.interpolate(gtl.unsqueeze(0), dim2, mode='bicubic').squeeze()
+        name = str(i).zfill(10) + '_2p'
         torch.save(gtl, savefolder+name)
-        print(name, i+1, len(gt_names))
+        print(name, i, len(keypoint))
     print('fin all')
 def test_gtl():
     import matplotlib.pyplot as plt 
@@ -86,4 +87,8 @@ def ex_gen_gtl_folder():
     gen_gtl_folder(gt_folder, savefolder, dim1, dim2)
 
 if __name__ == "__main__":
-    test_gtl()
+    gt_file = 'training/gt_random_background.torch'
+    savefolder = 'training/gtl/random_background/'
+    dim1 = (360,360)
+    dim2 = (45,45)
+    gen_gtl_folder(gt_file, savefolder, dim1, dim2)
