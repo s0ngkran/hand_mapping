@@ -47,8 +47,9 @@ def generate_gts(gt_file, dist_folder, dim1, dim2, sigma):
         gt = F.interpolate(gt.unsqueeze(0), (width, height) ,mode='bicubic')
         gt = gt.squeeze()
 
+        name = str(i).zfill(10)
         torch.save(gt, dist_folder+name)
-        print(name, i,len(gt_names)-1)
+        print(name, i,len(keypoint)-1)
         # plt.imshow(torch.max(a, dim=0)[0])
         # plt.show()
 if __name__ == "__main__":
