@@ -24,17 +24,16 @@ def gen_gts(cx,cy,width,height,sigma):
     # plt.show()
     return ans
 
-def generate_gts(gt_folder, dist_folder, dim1, dim2, sigma):
-    for _,__,gt_names in os.walk(gt_folder):
-        print('fin walk')
+def generate_gts(gt_file, dist_folder, dim1, dim2, sigma):
+    assert gt_file[-6:] == '.torch'
+    gt = torch.load(gt_file)
+    keypoint = gt['keypoint']
+    for i in range(len(keypoint)):
+        if i == 0: continue
 
-    for i, gt_name in enumerate(gt_names):
-        
-        name = gt_name[:-4]
-        with open(gt_folder + gt_name, 'rb') as f:
-            data = pickle.load(f)
-            data = data['keypoint']
-        
+        #if i<=350: continue
+
+        data = keypoint[i]
         gts = []
         for x,y in data:
             cx,cy = x,y
@@ -49,9 +48,13 @@ def generate_gts(gt_folder, dist_folder, dim1, dim2, sigma):
         gt = gt.squeeze()
 
         torch.save(gt, dist_folder+name)
-        print(name, i+1,len(gt_names))
+        print(name, i,len(gt_names)-1)
         # plt.imshow(torch.max(a, dim=0)[0])
         # plt.show()
 if __name__ == "__main__":
-    gt_folder, dist_folder, dim1, dim2, sigma = 'testing/pkl/', 'testing/gts/', (360,360),(45,45),18
-    generate_gts(gt_folder, dist_folder, dim1, dim2, sigma)
+    gt_file = 'training/gt_random_background.torch'
+    dist_folder = 'training/gts/random_background/'
+    dim1 = (360,360)
+    dim2 = (45,45)
+    sigma = 18
+    generate_gts(gt_file, dist_folder, dim1, dim2, sigma)
