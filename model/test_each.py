@@ -11,9 +11,9 @@ from test_function_1block import Tester
 
 
 class Tester_img:
-    def __init__(self, weight, img_folder, gts_folder, gtl_folder, savename, savefolder
+    def __init__(self, weight, img_folder, pkl_folder, gts_folder, gtl_folder, savename, savefolder
                     , indexPredL=indexPredL, indexPredS=indexPredS, suffix_gt='_2p'):
-        assert img_folder[-1] == gts_folder[-1] == gtl_folder[-1] == savefolder[-1] == '/'
+        assert img_folder[-1] == gts_folder[-1] == gtl_folder[-1] == savefolder[-1] == pkl_folder[-1] == '/'
         print('init tester')
         self.indL, self.indS = indexPredL, indexPredS
         self.savename = savename
@@ -40,6 +40,7 @@ class Tester_img:
         self.gtl_names = [gtl_folder+name+suffix_gt for name in namei]
 
         self.genimg = torch2img(savename) # init torch2img class
+        self.tester = Tester(pkl_folder)
     def feed(self, img):
         self.model.eval()
         with torch.no_grad():
@@ -52,20 +53,26 @@ class Tester_img:
             img = torch.load(img_name).unsqueeze(0).cuda()
             gts = torch.load(gts_name).unsqueeze(0).cuda()
             gtl = torch.load(gtl_name).unsqueeze(0).cuda()
-            filename = namei
+            filename = str(int(namei)).zfill(3)
            
             header_msg = 'ep' + str(self.epoch) + '_' + str(int(namei))
             out = self.feed(img)
             self.genimg.genimg_(img, out, gts, gtl, filename, msg = header_msg, savefolder=self.savefolder)
+
+            index = [int(namei)]
+            self.tester.addtable(out, index)
+        self.tester.getacc(self.savefolder+'accfile')
+        
 if __name__ == "__main__":
     print('start')
     weight = 'save/train03_epoch0000000100_seed1.pth'
     img_folder = '../data014/testing/img_torch/'
+    pkl_folder = '../data014/testing/pkl/'
     gts_folder = '../data014/testing/gts/'
     gtl_folder = '../data014/testing/gtl/'
     savename = 'test_tr3'
     savefolder = 'test_each/'
     
-    tester = Tester_img(weight, img_folder, gts_folder, gtl_folder, savename,  savefolder)
+    tester = Tester_img(weight, img_folder, pkl_folder, gts_folder, gtl_folder, savename,  savefolder)
     tester.test()
     print('finish')
